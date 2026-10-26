@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Model Sticlă</title>
+<meta name="description" content="Calculator pentru distanțele dintre dungile de pe un geam.">
+<meta name="theme-color" content="#1f5f8b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  :root {
+    --bg: #f2f4f7;
+    --card: #ffffff;
+    --text: #1a2230;
+    --muted: #5d6878;
+    --border: #d5dbe3;
+    --accent: #1f5f8b;
+    --accent-soft: #e3eef6;
+    --accent-text: #ffffff;
+    --error: #b42318;
+    --error-soft: #fdecea;
+    --glass: #e6f1f8;
+    --glass-edge: #6b8aa3;
+    --stripe: #8fa9bd;
+    --dim: #5d6878;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10141a;
+      --card: #1a2029;
+      --text: #e8edf3;
+      --muted: #9aa6b5;
+      --border: #2f3946;
+      --accent: #5aa7d8;
+      --accent-soft: #1d3446;
+      --accent-text: #0b1520;
+      --error: #ff8a80;
+      --error-soft: #3a1d1b;
+      --glass: #1c2d3a;
+      --glass-edge: #7fa3bf;
+      --stripe: #5f7f98;
+      --dim: #9aa6b5;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 0 16px calc(24px + env(safe-area-inset-bottom));
+  }
+  header { max-width: 640px; margin: 0 auto; padding: 18px 0 8px; }
+  h1 { font-size: 22px; margin: 0; }
+  main { max-width: 640px; margin: 0 auto; display: grid; gap: 12px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  h2 { font-size: 15px; margin: 0 0 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+
+  .models { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .models button {
+    display: grid; justify-items: center; gap: 6px;
+    padding: 10px 4px 8px;
+    border: 2px solid var(--border); border-radius: 12px;
+    background: var(--card); color: var(--text);
+    font: inherit; font-size: 14px; cursor: pointer;
+  }
+  .models button svg { width: 34px; height: 64px; }
+  .models button[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+  input {
+    width: 100%; min-width: 0;
+    font: inherit; font-size: 20px; color: var(--text);
+    padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg);
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+
+  .side { margin-top: 12px; display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .seg button {
+    font: inherit; font-size: 16px; padding: 10px; border: 0;
+    background: var(--card); color: var(--text); cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+
+  .error { background: var(--error-soft); color: var(--error); border-radius: 10px; padding: 12px; font-weight: 600; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stats div { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; }
+  .stats span { display: block; font-size: 13px; color: var(--muted); }
+  .stats b { font-size: 24px; }
+  .stats small { font-size: 14px; font-weight: 400; color: var(--muted); }
+
+  #drawing { display: block; width: 100%; max-height: 62vh; margin: 14px auto 4px; }
+  #drawing text { fill: var(--dim); font-family: system-ui, sans-serif; }
+  .hint { font-size: 14px; color: var(--muted); margin: 6px 0 10px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 17px; font-variant-numeric: tabular-nums; }
+  th { font-size: 13px; color: var(--muted); font-weight: 600; text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  td { text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  td:first-child { font-weight: 600; }
+
+  .share {
+    width: 100%; margin-top: 14px; padding: 14px;
+    font: inherit; font-size: 17px; font-weight: 600;
+    border: 0; border-radius: 12px;
+    background: var(--accent); color: var(--accent-text); cursor: pointer;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .no-print { display: none !important; }
+    .card { border: 0; padding: 0; }
+    #drawing { max-height: 55vh; }
+  }
+</style>
+</head>
+<body>
+<header><h1>Model Sticlă</h1></header>
+<main>
+  <section class="card no-print">
+    <h2>1. Alege modelul</h2>
+    <div class="models" role="radiogroup" aria-label="Model">
+      <button type="button" role="radio" data-model="1" aria-checked="false">
+        <svg viewBox="0 0 34 64" aria-hidden="true"><rect x="1" y="1" width="32" height="62" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><g fill="currentColor"><rect x="13" y="9" width="20" height="5"/><rect x="1" y="20" width="20" height="5"/><rect x="13" y="31" width="20" height="5"/><rect x="1" y="42" width="20" height="5"/><rect x="13" y="53" width="20" height="5"/></g></svg>
+        Alternant
+      </button>
+      <button type="button" role="radio" data-model="2" aria-checked="false">
+        <svg viewBox="0 0 34 64" aria-hidden="true"><rect x="1" y="1" width="32" height="62" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><g fill="currentColor"><rect x="1" y="9" width="22" height="5"/><rect x="1" y="20" width="22" height="5"/><rect x="1" y="31" width="22" height="5"/><rect x="1" y="42" width="22" height="5"/><rect x="1" y="53" width="22" height="5"/></g></svg>
+        Aliniat
+      </button>
+      <button type="button" role="radio" data-model="3" aria-checked="false">
+        <svg viewBox="0 0 34 64" aria-hidden="true"><rect x="1" y="1" width="32" height="62" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><g fill="currentColor"><rect x="1" y="11" width="32" height="5"/><rect x="1" y="24" width="32" height="5"/><rect x="1" y="37" width="32" height="5"/><rect x="1" y="50" width="32" height="5"/></g></svg>
+        Lățime totală
+      </button>
+    </div>
+  </section>
+
+  <section class="card no-print">
+    <h2>2. Dimensiuni (mm)</h2>
+    <div class="grid">
+      <label>Înălțime geam <input id="H" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label>Lățime geam <input id="W" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label>Număr dungi <input id="N" type="text" inputmode="numeric" autocomplete="off"></label>
+      <label>Grosime dungă <input id="g" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label id="Lwrap">Lungime dungă <input id="L" type="text" inputmode="decimal" autocomplete="off"></label>
+    </div>
+    <div class="side" id="sideWrap">
+      <span id="sideLabel"></span>
+      <div class="seg">
+        <button type="button" data-side="left">Stânga</button>
+        <button type="button" data-side="right">Dreapta</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="no-print">3. Rezultat</h2>
+    <div id="error" class="error" hidden></div>
+    <div id="result">
+      <div class="stats">
+        <div><span>Spațiu între dungi</span><b id="gapOut"></b> <small>mm</small></div>
+        <div><span>Pas (dungă + spațiu)</span><b id="pitchOut"></b> <small>mm</small></div>
+      </div>
+      <svg id="drawing" role="img" aria-label="Desenul geamului cu dungile"></svg>
+      <p class="hint" id="hint"></p>
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <button type="button" class="share no-print" id="share">Trimite / Printează</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var STORE_KEY = 'modelSticla.v1';
+  var MODEL_NAMES = { 1: 'Alternant', 2: 'Aliniat', 3: 'Lățime totală' };
+  var SIDE_NAMES = { left: 'Stânga', right: 'Dreapta' };
+
+  var state = { model: 1, H: '2000', W: '900', N: '5', g: '50', L: '600', side1: 'right', side2: 'left' };
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (saved) for (var k in state) if (k in saved) state[k] = saved[k];
+  } catch (e) {}
+
+  var $ = function (id) { return document.getElementById(id); };
+  var inputs = ['H', 'W', 'N', 'g', 'L'];
+
+  function num(v) {
+    var n = parseFloat(String(v).replace(',', '.').trim());
+    return isFinite(n) ? n : NaN;
+  }
+  function fmt(n) {
+    return (Math.round(n * 10) / 10).toLocaleString('ro-RO', { maximumFractionDigits: 1, useGrouping: false });
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  // Varianta A: spații egale sus, jos și între dungi.
+  function compute() {
+    var H = num(state.H), W = num(state.W), N = num(state.N), g = num(state.g), L = num(state.L);
+    var shortStripes = state.model !== 3;
+    if (!(H > 0)) return { error: 'Introdu înălțimea geamului.' };
+    if (!(W > 0)) return { error: 'Introdu lățimea geamului.' };
+    if (!(N >= 1) || Math.floor(N) !== N) return { error: 'Numărul de dungi trebuie să fie un număr întreg (minim 1).' };
+    if (!(g > 0)) return { error: 'Introdu grosimea dungii.' };
+    if (N * g >= H) return { error: 'Dungile nu încap: ' + N + ' × ' + fmt(g) + ' mm = ' + fmt(N * g) + ' mm, mai mult decât înălțimea geamului.' };
+    if (shortStripes) {
+      if (!(L > 0)) return { error: 'Introdu lungimea dungii.' };
+      if (L > W) return { error: 'Lungimea dungii (' + fmt(L) + ' mm) e mai mare decât lățimea geamului (' + fmt(W) + ' mm).' };
+    } else {
+      L = W;
+    }
+    var gap = (H - N * g) / (N + 1);
+    var firstSide = state.model === 1 ? state.side1 : state.side2;
+    var stripes = [];
+    for (var i = 1; i <= N; i++) {
+      var side = 'full';
+      if (state.model === 2) side = firstSide;
+      if (state.model === 1) side = (i % 2 === 1) ? firstSide : (firstSide === 'left' ? 'right' : 'left');
+      var top = i * gap + (i - 1) * g;
+      stripes.push({ nr: i, top: top, bottom: top + g, side: side });
+    }
+    return { H: H, W: W, N: N, g: g, L: L, gap: gap, pitch: gap + g, stripes: stripes };
+  }
+
+  function el(name, attrs, text) {
+    var e = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for (var a in attrs) e.setAttribute(a, attrs[a]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function draw(r) {
+    var svg = $('drawing');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var u = Math.max(r.H, r.W) / 30;            // unitate de desen
+    var font = u;
+    var stripeFont = Math.min(font, r.pitch * 0.75);
+    var showStripeLabels = stripeFont >= font * 0.35;
+    var mLeft = font * 2.2, mTop = font * 2.4, mRight = showStripeLabels ? stripeFont * 4.6 : font, mBottom = font * 0.6;
+    svg.setAttribute('viewBox', [-mLeft, -mTop, r.W + mLeft + mRight, r.H + mTop + mBottom].join(' '));
+    var lw = u * 0.06;
+    var dimStyle = { stroke: 'var(--dim)', 'stroke-width': lw };
+
+    svg.appendChild(el('rect', { x: 0, y: 0, width: r.W, height: r.H, fill: 'var(--glass)', stroke: 'var(--glass-edge)', 'stroke-width': lw * 2 }));
+
+    r.stripes.forEach(function (s) {
+      var x = s.side === 'right' ? r.W - r.L : 0;
+      svg.appendChild(el('rect', { x: x, y: s.top, width: r.L, height: r.g, fill: 'var(--stripe)' }));
+      if (showStripeLabels) {
+        svg.appendChild(el('line', Object.assign({ x1: r.W, y1: s.top, x2: r.W + stripeFont * 0.5, y2: s.top }, dimStyle)));
+        svg.appendChild(el('text', { x: r.W + stripeFont * 0.7, y: s.top, 'font-size': stripeFont, 'dominant-baseline': 'middle' }, fmt(s.top)));
+      }
+    });
+
+    // Cota lățime (sus)
+    var yd = -font * 1.1;
+    svg.appendChild(el('line', Object.assign({ x1: 0, y1: yd, x2: r.W, y2: yd }, dimStyle)));
+    svg.appendChild(el('line', Object.assign({ x1: 0, y1: yd - font * 0.4, x2: 0, y2: yd + font * 0.4 }, dimStyle)));
+    svg.appendChild(el('line', Object.assign({ x1: r.W, y1: yd - font * 0.4, x2: r.W, y2: yd + font * 0.4 }, dimStyle)));
+    svg.appendChild(el('text', { x: r.W / 2, y: yd - font * 0.35, 'font-size': font, 'text-anchor': 'middle' }, fmt(r.W)));
+
+    // Cota înălțime (stânga)
+    var xd = -font * 1.1;
+    svg.appendChild(el('line', Object.assign({ x1: xd, y1: 0, x2: xd, y2: r.H }, dimStyle)));
+    svg.appendChild(el('line', Object.assign({ x1: xd - font * 0.4, y1: 0, x2: xd + font * 0.4, y2: 0 }, dimStyle)));
+    svg.appendChild(el('line', Object.assign({ x1: xd - font * 0.4, y1: r.H, x2: xd + font * 0.4, y2: r.H }, dimStyle)));
+    svg.appendChild(el('text', { x: xd - font * 0.35, y: r.H / 2, 'font-size': font, 'text-anchor': 'middle', transform: 'rotate(-90 ' + (xd - font * 0.35) + ' ' + (r.H / 2) + ')' }, fmt(r.H)));
+  }
+
+  function renderTable(r) {
+    var shortStripes = state.model !== 3;
+    var head = '<th>Dunga</th><th>De la (mm)</th><th>Până la (mm)</th>' + (shortStripes ? '<th>Pornește din</th>' : '');
+    $('thead').innerHTML = head;
+    $('tbody').innerHTML = r.stripes.map(function (s) {
+      return '<tr><td>' + s.nr + '</td><td>' + fmt(s.top) + '</td><td>' + fmt(s.bottom) + '</td>' +
+        (shortStripes ? '<td>' + SIDE_NAMES[s.side] + '</td>' : '') + '</tr>';
+    }).join('');
+    $('hint').innerHTML = 'Toate cotele se măsoară de la <b>marginea de sus</b> a geamului.' +
+      (shortStripes ? ' Fiecare dungă are ' + fmt(r.L) + ' mm lungime, măsurată din marginea indicată.' : '');
+  }
+
+  function render() {
+    document.querySelectorAll('.models button').forEach(function (b) {
+      b.setAttribute('aria-checked', String(Number(b.dataset.model) === state.model));
+    });
+    var shortStripes = state.model !== 3;
+    $('Lwrap').hidden = !shortStripes;
+    $('sideWrap').hidden = !shortStripes;
+    $('sideLabel').textContent = state.model === 1 ? 'Prima dungă (de sus) pornește din:' : 'Dungile pornesc din:';
+    var side = state.model === 1 ? state.side1 : state.side2;
+    document.querySelectorAll('.seg button').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.side === side));
+    });
+
+    var r = compute();
+    $('error').hidden = !r.error;
+    $('result').hidden = !!r.error;
+    if (r.error) { $('error').textContent = r.error; return; }
+    $('gapOut').textContent = fmt(r.gap);
+    $('pitchOut').textContent = fmt(r.pitch);
+    draw(r);
+    renderTable(r);
+    lastResult = r;
+  }
+
+  var lastResult = null;
+
+  function summary(r) {
+    var lines = [
+      'Model sticlă – ' + MODEL_NAMES[state.model],
+      'Geam: ' + fmt(r.H) + ' × ' + fmt(r.W) + ' mm (înălțime × lățime)',
+      'Dungi: ' + r.N + ' × ' + fmt(r.g) + ' mm' + (state.model !== 3 ? ', lungime ' + fmt(r.L) + ' mm' : ', pe toată lățimea'),
+      'Spațiu între dungi: ' + fmt(r.gap) + ' mm | Pas: ' + fmt(r.pitch) + ' mm',
+      'Cote de la marginea de sus:'
+    ];
+    r.stripes.forEach(function (s) {
+      lines.push('  ' + s.nr + '. ' + fmt(s.top) + ' – ' + fmt(s.bottom) + ' mm' + (s.side !== 'full' ? ' (' + SIDE_NAMES[s.side] + ')' : ''));
+    });
+    return lines.join('\n');
+  }
+
+  inputs.forEach(function (id) {
+    var input = $(id);
+    input.value = state[id];
+    input.addEventListener('input', function () { state[id] = input.value; save(); render(); });
+    input.addEventListener('focus', function () { input.select(); });
+  });
+  document.querySelectorAll('.models button').forEach(function (b) {
+    b.addEventListener('click', function () { state.model = Number(b.dataset.model); save(); render(); });
+  });
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (state.model === 1) state.side1 = b.dataset.side; else state.side2 = b.dataset.side;
+      save(); render();
+    });
+  });
+  $('share').addEventListener('click', function () {
+    if (!lastResult) return;
+    var text = summary(lastResult);
+    if (navigator.share) {
+      navigator.share({ title: 'Model sticlă', text: text }).catch(function () {});
+    } else {
+      window.print();
+    }
+  });
+
+  render();
+
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>

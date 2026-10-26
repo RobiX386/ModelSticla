@@ -1,0 +1,14 @@
+{
+  "name": "Model Sticlă",
+  "short_name": "Model Sticlă",
+  "description": "Calculator pentru distanțele dintre dungile de pe un geam.",
+  "lang": "ro",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f4f7",
+  "theme_color": "#1f5f8b",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
